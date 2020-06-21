@@ -49,6 +49,8 @@ func getPlayers(w http.ResponseWriter, r *http.Request) {
             if err != nil {
                     log.Fatalf("Failed to iterate: %v", err)
             }
+
+            // add player to players array
             data := doc.Data()
             _name, _ := data["name"].(string)
             _team, _ := data["team"].(string)
