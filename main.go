@@ -1,7 +1,8 @@
 package main
 
 import (
-    _"fmt"
+    "fmt"
+    "reflect"
     "log"
     "net/http"
     "encoding/json"
@@ -21,7 +22,7 @@ var client *firestore.Client
 type FootballPlayer struct {
 	Name        string
 	Team        string
-	Value       int
+	Value       int64
 }
 
 // Set firestore client
@@ -36,21 +37,31 @@ func setFirestoreClient() (*firestore.Client, error) {
 }
 
 // Get all players
-// func getPlayers(w http.ResponseWriter, r *http.Request) {
-//     iter := client.Collection("players").Documents(context.Background())
-//     for {
-//             doc, err := iter.Next()
-//             if err == iterator.Done {
-//                     break
-//             }
-//             if err != nil {
-//                     log.Fatalf("Failed to iterate: %v", err)
-//             }
-//             fmt.Println(doc.Data())
-//     }
-//     w.Header().Set("Content-Type", "application/json")
-//     json.NewEncoder(w).Encode(FootballPlayer{Name: "test11"})
-// }
+func getPlayers(w http.ResponseWriter, r *http.Request) {
+    // define players array
+    var players []FootballPlayer
+
+    // iterate over players docs
+    iter := client.Collection("players").Documents(context.Background())
+    for {
+            doc, err := iter.Next()
+            if err == iterator.Done {
+                    break
+            }
+            if err != nil {
+                    log.Fatalf("Failed to iterate: %v", err)
+            }
+            data := doc.Data()
+            _name, _ := data["name"].(string)
+            _team, _ := data["team"].(string)
+            _value, _ := data["value"].(int64)
+            players = append(players, FootballPlayer{Name: _name, Team: _team, Value: _value})
+    }
+
+    // returns players json
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(players)
+}
 
 // Create player
 func createPlayer(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +96,7 @@ func main() {
     router := mux.NewRouter()
 
     // define endpoints
-    // router.HandleFunc("/", getPlayers).Methods("GET")
+    router.HandleFunc("/", getPlayers).Methods("GET")
     router.HandleFunc("/", createPlayer).Methods("POST")
 
     // listen on port 5000
